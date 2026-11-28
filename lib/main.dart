@@ -357,7 +357,6 @@ class _AccountFlowState extends State<AccountFlow> {
                 prefixText: selectedSession == null || selectedCourse == null
                     ? null
                     : '$selectedSession-$selectedCourse-',
-                hintText: '0044',
               ),
               onChanged: (_) => setState(() {}),
               validator: (value) => RegExp(r'^\d{4}$').hasMatch(value ?? '')
