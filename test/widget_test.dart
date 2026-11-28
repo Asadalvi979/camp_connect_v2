@@ -19,7 +19,7 @@ void main() {
   });
 
   testWidgets(
-    'Registration rejects malformed CMS IDs before contacting Firebase',
+    'Registration builds CMS ID from session, course and four-digit number',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 1400);
       tester.view.devicePixelRatio = 1;
@@ -28,15 +28,39 @@ void main() {
       await tester.pumpWidget(const MyApp());
       await tester.tap(find.text('New here? Create an account'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const ValueKey('CMS ID')), 'wrong');
+      await tester.enterText(find.byKey(const ValueKey('CMS number')), '44');
       await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
-      expect(
-        find.text('Use session-course-number, e.g. F24-BSSE-0044.'),
-        findsOneWidget,
-      );
+      expect(find.text('Enter your four-digit CMS number.'), findsOneWidget);
+      expect(find.text('Select your session.'), findsOneWidget);
+      expect(find.text('Select your course.'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('Session')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('F24').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('Course')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('BSSE').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('CMS number')), '0044');
+      await tester.pumpAndSettle();
+      expect(find.text('Complete CMS ID: F24-BSSE-0044'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('Registration dropdowns fit mobile width', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MyApp());
+    await tester.tap(find.text('New here? Create an account'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.byKey(const ValueKey('Course')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -34,9 +34,13 @@ are provided by the Auth emulator. No email is sent in this development mode.
 The numeric OTP registration function refuses to run outside the emulator until
 email delivery is implemented.
 
-Student email domain is `student.riphahsahiwaledu.pk`. CMS IDs use the initial
-validation pattern of one session letter plus two digits, a 2–10 letter course,
-and four digits, such as `F24-BSSE-0044`. Semester 1–4 assigns Junior Student;
+Student email domain is `student.riphahsahiwaledu.pk`. Registration offers session
+and course dropdowns and asks the user for only the four-digit CMS number. The
+app assembles an ID such as `F24-BSSE-0044` and shows a preview before submission.
+The session list covers spring/fall 2022 through the next calendar year; course
+options are BSSE, BSCS, BSAI, BSIT, BBA, Pharm-D (`PHARMD`) and DPT. These
+options can be adjusted when the official campus program list is supplied.
+Semester 1–4 assigns Junior Student;
 5–8 assigns Senior Student. Alumni stay Pending Admin Review after OTP verification.
 OTP development defaults are five-minute expiry, five attempts and a one-minute
 resend interval. These defaults need confirmation before production.

@@ -1,6 +1,7 @@
 import 'features/campus_workspace.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -76,12 +77,26 @@ class _AccountFlowState extends State<AccountFlow> {
   final password = TextEditingController();
   final name = TextEditingController();
   final cms = TextEditingController();
+  final cmsNumber = TextEditingController();
   final degree = TextEditingController();
   final year = TextEditingController();
   final code = TextEditingController();
   String page = 'login';
   String category = 'Student';
   int semester = 1;
+  String? selectedSession;
+  String? selectedCourse;
+  static const courses = <String, String>{
+    'BSSE': 'BS Software Engineering',
+    'BSCS': 'BS Computer Science',
+    'BSAI': 'BS Artificial Intelligence',
+    'BSIT': 'BS Information Technology',
+    'BBA': 'Business Administration',
+    'PHARMD': 'Pharm-D',
+    'DPT': 'Doctor of Physical Therapy',
+  };
+  String get completeCmsId =>
+      '${selectedSession ?? ''}-${selectedCourse ?? ''}-${cmsNumber.text.trim()}';
   bool terms = false;
   bool busy = false;
   bool isAdmin = false;
@@ -107,7 +122,16 @@ class _AccountFlowState extends State<AccountFlow> {
 
   @override
   void dispose() {
-    for (final controller in [email, password, name, cms, degree, year, code]) {
+    for (final controller in [
+      email,
+      password,
+      name,
+      cms,
+      cmsNumber,
+      degree,
+      year,
+      code,
+    ]) {
       controller.dispose();
     }
     super.dispose();
@@ -204,7 +228,7 @@ class _AccountFlowState extends State<AccountFlow> {
       }
       await FirebaseFunctions.instance.httpsCallable('registerAccount').call({
         'name': name.text.trim(),
-        'cmsId': cms.text.trim(),
+        'cmsId': completeCmsId,
         'category': category,
         'semester': semester,
         'degree': degree.text.trim(),
@@ -264,31 +288,83 @@ class _AccountFlowState extends State<AccountFlow> {
               'Create your account to learn, connect and collaborate.',
             ),
             const SizedBox(height: 24),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'Student', label: Text('Student')),
-                ButtonSegment(value: 'Senior', label: Text('Senior')),
-                ButtonSegment(value: 'Alumni', label: Text('Alumni')),
-              ],
-              selected: {category},
-              onSelectionChanged: busy
-                  ? null
-                  : (value) => setState(() {
-                      category = value.first;
-                      semester = category == 'Senior' ? 5 : 1;
-                    }),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SegmentedButton<String>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(value: 'Student', label: Text('Student')),
+                  ButtonSegment(value: 'Senior', label: Text('Senior')),
+                  ButtonSegment(value: 'Alumni', label: Text('Alumni')),
+                ],
+                selected: {category},
+                onSelectionChanged: busy
+                    ? null
+                    : (value) => setState(() {
+                        category = value.first;
+                        semester = category == 'Senior' ? 5 : 1;
+                      }),
+              ),
             ),
             const SizedBox(height: 24),
             field('Full name', name),
-            field(
-              'CMS ID',
-              cms,
-              check: (value) =>
-                  RegExp(r'^[A-Za-z]\d{2}-[A-Za-z]{2,10}-\d{4}$')
-                      .hasMatch(value)
-                  ? null
-                  : 'Use session-course-number, e.g. F24-BSSE-0044.',
+            DropdownButtonFormField<String>(
+              key: const ValueKey('Session'),
+              initialValue: selectedSession,
+              decoration: const InputDecoration(labelText: 'Session'),
+              items: [
+                for (var year = DateTime.now().year + 1; year >= 2022; year--)
+                  for (final term in ['F', 'S'])
+                    DropdownMenuItem(
+                      value: '$term${(year % 100).toString().padLeft(2, '0')}',
+                      child: Text(
+                        '$term${(year % 100).toString().padLeft(2, '0')}',
+                      ),
+                    ),
+              ],
+              onChanged: (value) => setState(() => selectedSession = value),
+              validator: (value) =>
+                  value == null ? 'Select your session.' : null,
             ),
+            const SizedBox(height: 18),
+            DropdownButtonFormField<String>(
+              key: const ValueKey('Course'),
+              isExpanded: true,
+              initialValue: selectedCourse,
+              decoration: const InputDecoration(labelText: 'Course'),
+              items: [
+                for (final entry in courses.entries)
+                  DropdownMenuItem(value: entry.key, child: Text(entry.key)),
+              ],
+              onChanged: (value) => setState(() => selectedCourse = value),
+              validator: (value) =>
+                  value == null ? 'Select your course.' : null,
+            ),
+            const SizedBox(height: 18),
+            TextFormField(
+              key: const ValueKey('CMS number'),
+              controller: cmsNumber,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(4),
+              ],
+              decoration: InputDecoration(
+                labelText: 'CMS number',
+                prefixText: selectedSession == null || selectedCourse == null
+                    ? null
+                    : '$selectedSession-$selectedCourse-',
+                hintText: '0044',
+              ),
+              onChanged: (_) => setState(() {}),
+              validator: (value) => RegExp(r'^\d{4}$').hasMatch(value ?? '')
+                  ? null
+                  : 'Enter your four-digit CMS number.',
+            ),
+            Text(
+              'Complete CMS ID: ${selectedSession ?? '___'}-${selectedCourse ?? '____'}-${cmsNumber.text.isEmpty ? '____' : cmsNumber.text}',
+            ),
+            const SizedBox(height: 18),
             field(
               category == 'Alumni' ? 'Personal email' : 'University email',
               email,
@@ -313,6 +389,7 @@ class _AccountFlowState extends State<AccountFlow> {
             if (category != 'Alumni') ...[
               DropdownButtonFormField<int>(
                 key: ValueKey(category),
+                isExpanded: true,
                 initialValue: semester,
                 decoration: const InputDecoration(labelText: 'Semester'),
                 items: List.generate(
