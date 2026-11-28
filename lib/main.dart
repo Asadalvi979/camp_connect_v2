@@ -334,7 +334,10 @@ class _AccountFlowState extends State<AccountFlow> {
               decoration: const InputDecoration(labelText: 'Course'),
               items: [
                 for (final entry in courses.entries)
-                  DropdownMenuItem(value: entry.key, child: Text(entry.key)),
+                  DropdownMenuItem(
+                    value: entry.key,
+                    child: Text(entry.key == 'PHARMD' ? 'Pharm-D' : entry.key),
+                  ),
               ],
               onChanged: (value) => setState(() => selectedCourse = value),
               validator: (value) =>
