@@ -30,7 +30,7 @@ exports.registerAccount = onCall(async request => {
     throw new HttpsError('invalid-argument', 'Enter your name and a valid CMS ID.');
   }
   if (!alumni && (!Number.isInteger(semester) || semester < 1 || semester > 8 ||
-      user.email?.split('@')[1]?.toLowerCase() !== 'student.riphahsahiwaledu.pk')) {
+      user.email?.split('@')[1]?.toLowerCase() !== 'student.riphahsahiwal.edu.pk')) {
     throw new HttpsError('invalid-argument', 'Use your university email and semester 1–8.');
   }
   if (alumni && (!String(data.degree || '').trim() || !/^\d{4}$/.test(String(data.graduationYear)))) {

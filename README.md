@@ -34,7 +34,7 @@ are provided by the Auth emulator. No email is sent in this development mode.
 The numeric OTP registration function refuses to run outside the emulator until
 email delivery is implemented.
 
-Student email domain is `student.riphahsahiwaledu.pk`. Registration offers session
+Student email domain is `student.riphahsahiwal.edu.pk`. Registration offers session
 and course dropdowns and asks the user for only the four-digit CMS number. The
 app assembles an ID such as `F24-BSSE-0044` and shows a preview before submission.
 The session list covers spring/fall 2022 through the next calendar year; course

@@ -34,12 +34,14 @@ async function confirm(user) {
   assert.equal((await challenge.get()).exists, false);
 }
 (async () => {
-  const student = await signup(`${suffix}@student.riphahsahiwaledu.pk`);
+  const student = await signup(`${suffix}@student.riphahsahiwal.edu.pk`);
   const cms = `F24-BSSE-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
   const input = {name: 'Student Test', cmsId: cms, category: 'Student', semester: 4};
+  const wrongDomain = await signup(`${suffix}@student.riphahsahiwaledu.pk`);
+  assert.equal((await call('registerAccount', wrongDomain, input)).error.status, 'INVALID_ARGUMENT');
   assert.equal((await call('registerAccount', student, input)).result.sent, true);
   assert.equal((await call('registerAccount', student, input)).error.status, 'RESOURCE_EXHAUSTED');
-  const duplicate = await signup(`duplicate-${suffix}@student.riphahsahiwaledu.pk`);
+  const duplicate = await signup(`duplicate-${suffix}@student.riphahsahiwal.edu.pk`);
   assert.equal((await call('registerAccount', duplicate, input)).error.status, 'ALREADY_EXISTS');
   await confirm(student);
   assert.equal((await db.doc(`accounts/${student.localId}`).get()).data().status, 'Active');

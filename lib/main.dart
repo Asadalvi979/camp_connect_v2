@@ -375,7 +375,7 @@ class _AccountFlowState extends State<AccountFlow> {
                   (category == 'Alumni'
                       ? RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)
                       : RegExp(
-                          r'^[^@\s]+@student\.riphahsahiwaledu\.pk$',
+                          r'^[^@\s]+@student\.riphahsahiwal\.edu\.pk$',
                           caseSensitive: false,
                         ).hasMatch(value))
                   ? null
