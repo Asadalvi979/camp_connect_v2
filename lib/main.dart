@@ -153,7 +153,10 @@ class _AccountFlowState extends State<AccountFlow> {
       if (mounted) {
         setState(
           () => feedback =
-              error.message ?? 'Unable to connect. Please try again.',
+              error.code == 'network-request-failed' ||
+                  (error.message ?? '').contains('network AuthError')
+              ? 'Cannot reach the local Firebase emulators. Start Auth, Firestore and Functions emulators on this computer, then retry.'
+              : error.message ?? 'Unable to connect. Please try again.',
         );
       }
     } catch (_) {
@@ -205,7 +208,14 @@ class _AccountFlowState extends State<AccountFlow> {
   }
 
   Future<void> register() async {
-    if (!form.currentState!.validate()) return;
+    if (!form.currentState!.validate()) {
+      setState(
+        () => feedback = category == 'Alumni'
+            ? 'Please correct the highlighted fields above.'
+            : 'Please correct the highlighted fields above. Use an email ending in @student.riphahsahiwal.edu.pk.',
+      );
+      return;
+    }
     if (!terms) {
       setState(() => feedback = 'Please accept the Terms and Privacy Policy.');
       return;

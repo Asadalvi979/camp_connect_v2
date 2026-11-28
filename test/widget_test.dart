@@ -32,6 +32,10 @@ void main() {
       await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Please correct the highlighted fields above.'),
+        findsOneWidget,
+      );
       expect(find.text('Enter your four-digit CMS number.'), findsOneWidget);
       expect(find.text('Select your session.'), findsOneWidget);
       expect(find.text('Select your course.'), findsOneWidget);

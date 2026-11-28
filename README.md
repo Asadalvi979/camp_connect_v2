@@ -28,6 +28,12 @@ flutter run -d chrome
 
 Use debug mode for this emulator-only build. FlutterFire restores emulator sessions before Auth initialization in debug mode; production release configuration remains pending. The app connects only to local emulators. For the Android emulator use
 `flutter run --dart-define=EMULATOR_HOST=10.0.2.2`.
+If registration shows a network AuthError, keep the Firebase emulators running
+in a separate terminal on the same computer. For Chrome, `127.0.0.1` is the
+default. For the Android Studio emulator, set `EMULATOR_HOST=10.0.2.2` in its
+Flutter run configuration or launch from the terminal with the command above.
+On a physical phone, `10.0.2.2` does not work: use the computer's reachable
+LAN IP as `EMULATOR_HOST` and expose the emulator ports to that network.
 Real Firebase configuration and live service deployment are a later step.
 The functions print numeric OTPs to the local emulator log. Password-reset links
 are provided by the Auth emulator. No email is sent in this development mode.
