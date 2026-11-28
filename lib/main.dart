@@ -9,6 +9,10 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 const teal = Color(0xFF107D78);
 const navy = Color(0xFF18324F);
+const configuredEmulatorHost = String.fromEnvironment(
+  'EMULATOR_HOST',
+  defaultValue: '127.0.0.1',
+);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,10 +24,7 @@ Future<void> main() async {
       projectId: 'demo-campconnect',
     ),
   );
-  const host = String.fromEnvironment(
-    'EMULATOR_HOST',
-    defaultValue: '127.0.0.1',
-  );
+  const host = configuredEmulatorHost;
   await FirebaseAuth.instance.useAuthEmulator(host, 9099);
   FirebaseFirestore.instance.useFirestoreEmulator(host, 8088);
   FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
@@ -155,7 +156,7 @@ class _AccountFlowState extends State<AccountFlow> {
           () => feedback =
               error.code == 'network-request-failed' ||
                   (error.message ?? '').contains('network AuthError')
-              ? 'Cannot reach the local Firebase emulators. Start Auth, Firestore and Functions emulators on this computer, then retry.'
+              ? 'Firebase Auth connection failed. Configured emulator: $configuredEmulatorHost:9099. Keep the emulators running. For Chrome on the same computer, use EMULATOR_HOST=127.0.0.1.'
               : error.message ?? 'Unable to connect. Please try again.',
         );
       }
