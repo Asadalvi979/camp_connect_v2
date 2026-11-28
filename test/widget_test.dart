@@ -43,6 +43,14 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('BSSE').last);
       await tester.pumpAndSettle();
+      final numberField = find.byKey(const ValueKey('CMS number'));
+      await tester.enterText(numberField, '');
+      await tester.tap(numberField);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextFormField>(numberField);
+      expect(field.controller!.text, isEmpty);
+      expect(find.text('0044'), findsNothing);
+      expect(find.text('Complete CMS ID: F24-BSSE-____'), findsOneWidget);
       await tester.enterText(find.byKey(const ValueKey('CMS number')), '0044');
       await tester.pumpAndSettle();
       expect(find.text('Complete CMS ID: F24-BSSE-0044'), findsOneWidget);
