@@ -359,3 +359,78 @@ exports.moderatePost = onCall(async request => {
   });
   return {reviewed: true};
 });
+
+// Mentorship defaults can be configured before deployment.
+const mentorshipLimit = Math.max(1, Number(process.env.MENTORSHIP_PENDING_LIMIT) || 5);
+const mentorshipCooldownMs = Math.max(0, Number(process.env.MENTORSHIP_COOLDOWN_DAYS) || 7) * 86400000;
+const mentorEligible = account => account.status === 'Active' && ['Senior Student', 'Alumni'].includes(account.category);
+exports.listMentors = onCall(async request => {
+  await activeMember(requireUser(request));
+  let query = db.collection('accounts').where('status', '==', 'Active')
+    .where('category', 'in', ['Senior Student', 'Alumni']).orderBy('__name__').limit(30);
+  if (request.data?.cursor) query = query.startAfter(text(request.data.cursor, 128));
+  const result = await query.get();
+  return {mentors: result.docs.map(doc => {
+    const a = doc.data();
+    return {id: doc.id, name: a.name, category: a.category, department: a.department || '',
+      skills: a.skills || '', bio: a.bio || '', company: a.company || '', jobTitle: a.jobTitle || '',
+      available: a.mentorshipAvailable !== false};
+  }), cursor: result.size === 30 ? result.docs[result.size - 1].id : null};
+});
+exports.setMentorshipAvailability = onCall(async request => {
+  const uid = requireUser(request);
+  if (typeof request.data.available !== 'boolean') throw new HttpsError('invalid-argument', 'Choose availability.');
+  await db.runTransaction(async tx => {
+    const ref = db.doc(`accounts/${uid}`);
+    const account = await tx.get(ref);
+    if (!account.exists || !mentorEligible(account.data())) throw new HttpsError('permission-denied', 'An active mentor account is required.');
+    tx.update(ref, {mentorshipAvailable: request.data.available});
+  });
+  return {saved: true};
+});
+exports.requestMentorship = onCall(async request => {
+  const uid = requireUser(request);
+  const mentorId = text(request.data.mentorId, 128);
+  const message = text(request.data.message, 1000);
+  if (!mentorId || mentorId.includes('/') || mentorId === uid || !message) throw new HttpsError('invalid-argument', 'Choose another mentor and write a request message.');
+  const id = digest(`${uid}:${mentorId}`);
+  await db.runTransaction(async tx => {
+    const senderRef = db.doc(`accounts/${uid}`);
+    const ref = db.doc(`mentorshipRequests/${id}`);
+    const [sender, mentor, existing, pending] = await Promise.all([
+      tx.get(senderRef), tx.get(db.doc(`accounts/${mentorId}`)), tx.get(ref),
+      tx.get(db.collection('mentorshipRequests').where('requesterId', '==', uid).where('status', '==', 'Pending')),
+    ]);
+    if (!sender.exists || sender.data().status !== 'Active' || !['Junior Student', 'Senior Student'].includes(sender.data().category)) throw new HttpsError('permission-denied', 'An active student account is required.');
+    if (!mentor.exists || !mentorEligible(mentor.data()) || mentor.data().mentorshipAvailable === false) throw new HttpsError('failed-precondition', 'This mentor is currently unavailable.');
+    if (existing.exists && ['Pending', 'Accepted'].includes(existing.data().status)) throw new HttpsError('already-exists', 'You already have a pending or accepted request with this mentor.');
+    if (existing.exists && existing.data().status === 'Rejected' && Date.now() - existing.data().updatedAt.toMillis() < mentorshipCooldownMs) throw new HttpsError('failed-precondition', 'Please wait before requesting this mentor again.');
+    if (pending.size >= mentorshipLimit) throw new HttpsError('resource-exhausted', `You can have up to ${mentorshipLimit} pending requests.`);
+    tx.set(ref, {requesterId: uid, mentorId, requesterName: sender.data().name, mentorName: mentor.data().name,
+      message, status: 'Pending', conversationAuthorized: false, createdAt: Timestamp.now(), updatedAt: Timestamp.now()});
+    // Serialize concurrent requests from one student, including requests to different mentors.
+    tx.update(senderRef, {lastMentorshipRequestAt: Timestamp.now()});
+  });
+  return {id};
+});
+exports.respondMentorship = onCall(async request => {
+  const uid = requireUser(request);
+  const id = communityId(request.data.id);
+  const action = request.data.action;
+  if (!['accept', 'reject', 'cancel'].includes(action)) throw new HttpsError('invalid-argument', 'Invalid action.');
+  await db.runTransaction(async tx => {
+    const ref = db.doc(`mentorshipRequests/${id}`);
+    const [account, record] = await Promise.all([tx.get(db.doc(`accounts/${uid}`)), tx.get(ref)]);
+    if (!account.exists || account.data().status !== 'Active' || !record.exists) throw new HttpsError('permission-denied', 'Request unavailable.');
+    const data = record.data();
+    if ((action === 'cancel' ? data.requesterId : data.mentorId) !== uid) throw new HttpsError('permission-denied', 'You cannot change this request.');
+    if (data.status !== 'Pending') throw new HttpsError('failed-precondition', 'This request has already been resolved.');
+    if (action !== 'cancel') {
+      const student = await tx.get(db.doc(`accounts/${data.requesterId}`));
+      if (!mentorEligible(account.data()) || !student.exists || student.data().status !== 'Active') throw new HttpsError('failed-precondition', 'Both accounts must be eligible and active.');
+    }
+    const status = {accept: 'Accepted', reject: 'Rejected', cancel: 'Cancelled'}[action];
+    tx.update(ref, {status, conversationAuthorized: action === 'accept', updatedAt: Timestamp.now()});
+  });
+  return {saved: true};
+});

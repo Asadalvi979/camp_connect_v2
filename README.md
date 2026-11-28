@@ -3,7 +3,7 @@
 Flutter Android and web account-flow development, using Firebase emulators with
 project ID `demo-campconnect`. The current implementation includes login,
 registration, password-reset requests, numeric OTP verification, account status,
-alumni review on mobile and web, editable profiles, a live dashboard, public community creation/join/leave flows, and community discussions with posts, comments, reactions and reports. The uploaded CampConnect PDF designs are
+alumni review on mobile and web, editable profiles, a live dashboard, public community creation/join/leave flows, community discussions with posts, comments, reactions and reports, and mentorship requests. The uploaded CampConnect PDF designs are
 the visual reference.
 
 ## Local development
@@ -100,7 +100,7 @@ Cloud Functions, and Firestore rules prevent direct client writes.
 
 ## Remaining work
 
-Messaging, mentorship, resources, projects, notifications,
+Messaging, resources, projects, notifications,
 SQLite drafts, avatar uploads and expanded admin user management remain
 for subsequent increments. Terms/privacy copy and live email delivery require
 approved content/provider configuration. Live Functions and Storage require Blaze.
@@ -108,3 +108,24 @@ Native Android build/device testing remains pending because this cloud machine
 has no Android SDK/emulator or KVM device. Mobile layouts are checked at 390 px in
 Chromium. The emulator functions ran on the host's Node 24; Node 22 remains the
 configured deployment runtime.
+
+## Mentorship
+
+Open **Explore** to browse active senior students and approved alumni. Mentor
+profiles show department, skills, bio and availability. Directory search filters
+loaded results; use Load more mentors to include more profiles. Students and
+seniors can send a message with their request, see Sent requests, and cancel a
+Pending request. Mentors can toggle availability and accept/reject Received
+requests. Requests are private to their two participants; client writes are denied.
+
+Defaults: five Pending requests per requester and a seven-day cooldown after
+rejection. Configure `MENTORSHIP_PENDING_LIMIT` and `MENTORSHIP_COOLDOWN_DAYS`
+on the backend before deployment if different limits are approved. Accepted
+requests record conversation authorization for the future messaging module;
+chat and notifications are not implemented yet. A cancelled/rejected request
+that is resubmitted replaces the current pair's record.
+
+The approved development plan includes senior mentors as well as alumni, extending
+SRS v1.2's alumni-only formal mentorship eligibility. Backend emulator tests cover
+eligibility, duplicates, cancellation, acceptance/rejection, cooldown, pending
+limits, availability, participant read privacy and direct-write denial.

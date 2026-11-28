@@ -1,3 +1,4 @@
+import 'mentorship.dart';
 import 'community_discussion.dart';
 
 import 'package:flutter/foundation.dart';
@@ -416,7 +417,8 @@ class _CampusWorkspaceState extends State<CampusWorkspace> {
       );
     }
     if (selected == 1) return communityList();
-    if (selected == 2 || selected == 3) {
+    if (selected == 2) return Mentorship(account: account);
+    if (selected == 3) {
       return Text('${labels[selected]} is being prepared for your campus.');
     }
     if (selected == 4) {

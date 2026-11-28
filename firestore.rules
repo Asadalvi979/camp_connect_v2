@@ -37,6 +37,10 @@ service cloud.firestore {
         get(/databases/$(database)/documents/communities/$(resource.data.communityId)).data.status == 'Active';
       allow write: if false;
     }
+    match /mentorshipRequests/{id} {
+      allow read: if active() && (resource.data.requesterId == request.auth.uid || resource.data.mentorId == request.auth.uid);
+      allow write: if false;
+    }
     match /reports/{id} {
       allow read: if admin();
       allow write: if false;

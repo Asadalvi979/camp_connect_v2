@@ -15,3 +15,11 @@ cannot create an administrator.
 Current member work includes editable profile fields, a live dashboard and
 community browsing/join/leave. Verified semester, category and graduation details
 remain protected against member self-assignment.
+
+## Mentorship eligibility — 28 November 2026
+
+The user approved the proposed module with both senior students and approved
+alumni as mentors. This expands SRS v1.2 formal mentorship beyond alumni. Active
+junior/senior students may request guidance. Explore provides the mentor directory
+and Sent/Received request lists. Messaging and notifications remain separate phases.
+Pending limit 5 and rejection cooldown 7 days are configurable development defaults.
